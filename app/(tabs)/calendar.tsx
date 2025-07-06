@@ -9,7 +9,7 @@ import { router } from 'expo-router';
 import Animated, { FadeInDown, useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
 
 export default function CalendarScreen() {
-  const theme = useTheme();
+  const { theme } = useTheme();
   const [entries, setEntries] = useState<DiaryEntry[]>([]);
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [currentMonth, setCurrentMonth] = useState(new Date());

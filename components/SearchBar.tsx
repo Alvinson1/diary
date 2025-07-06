@@ -10,7 +10,7 @@ interface SearchBarProps {
 }
 
 export function SearchBar({ value, onChangeText, placeholder = "Search entries..." }: SearchBarProps) {
-  const theme = useTheme();
+  const { theme } = useTheme();
 
   return (
     <View style={[styles.container, { backgroundColor: theme.surface, borderColor: theme.border }]}>

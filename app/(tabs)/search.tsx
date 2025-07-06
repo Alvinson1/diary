@@ -8,7 +8,7 @@ import { EntryCard } from '@/components/EntryCard';
 import { router } from 'expo-router';
 
 export default function SearchScreen() {
-  const theme = useTheme();
+  const { theme } = useTheme();
   const [entries, setEntries] = useState<DiaryEntry[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredEntries, setFilteredEntries] = useState<DiaryEntry[]>([]);

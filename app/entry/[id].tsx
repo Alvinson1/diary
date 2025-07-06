@@ -10,7 +10,7 @@ import { moodColors, moodEmojis } from '@/constants/themes';
 import { format } from 'date-fns';
 
 export default function EntryDetailScreen() {
-  const theme = useTheme();
+  const { theme } = useTheme();
   const { id } = useLocalSearchParams();
   const [entry, setEntry] = useState<DiaryEntry | null>(null);
   const [loading, setLoading] = useState(true);

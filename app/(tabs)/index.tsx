@@ -10,7 +10,7 @@ import { EntryCard } from '@/components/EntryCard';
 import { format, isToday } from 'date-fns';
 
 export default function JournalScreen() {
-  const theme = useTheme();
+  const { theme } = useTheme();
   const [entries, setEntries] = useState<DiaryEntry[]>([]);
   const [loading, setLoading] = useState(true);
 

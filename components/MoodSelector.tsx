@@ -13,7 +13,7 @@ interface MoodSelectorProps {
 const moods: MoodType[] = ['amazing', 'happy', 'neutral', 'sad', 'angry'];
 
 export function MoodSelector({ selectedMood, onMoodSelect }: MoodSelectorProps) {
-  const theme = useTheme();
+  const { theme } = useTheme();
 
   const handleMoodPress = (mood: MoodType) => {
     hapticFeedback.light();

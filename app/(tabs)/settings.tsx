@@ -13,7 +13,7 @@ interface UserPreferences {
 }
 
 export default function SettingsScreen() {
-  const theme = useTheme();
+  const { theme, isDark, updateTheme, isLoading: themeLoading } = useTheme();
   const [preferences, setPreferences] = useState<UserPreferences>({
     biometricEnabled: false,
     reminderEnabled: false,
@@ -109,9 +109,15 @@ export default function SettingsScreen() {
     await saveSettings(newPreferences);
   };
 
-  const handleThemeToggle = async (isDark: boolean) => {
-    const newPreferences = { ...preferences, theme: isDark ? 'dark' : 'light' };
-    await saveSettings(newPreferences);
+  const handleThemeToggle = async (isDarkMode: boolean) => {
+    const newTheme = isDarkMode ? 'dark' : 'light';
+    const newPreferences = { ...preferences, theme: newTheme };
+    
+    // Update both local state and global theme
+    await Promise.all([
+      saveSettings(newPreferences),
+      updateTheme(newTheme)
+    ]);
   };
 
   const handleNotificationsToggle = async (enabled: boolean) => {
@@ -146,17 +152,7 @@ export default function SettingsScreen() {
           style: 'destructive',
           onPress: async () => {
             try {
-              // Clear all entries by saving an empty array
-              await storageService.saveEntry({ 
-                id: 'temp', 
-                date: '', 
-                title: '', 
-                content: '', 
-                mood: 'neutral', 
-                tags: [], 
-                createdAt: '', 
-                updatedAt: '' 
-              });
+              await storageService.clearAllEntries();
               
               if (Platform.OS === 'web') {
                 alert('All diary entries have been deleted.');
@@ -221,7 +217,7 @@ export default function SettingsScreen() {
     </TouchableOpacity>
   );
 
-  if (loading) {
+  if (loading || themeLoading) {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
         <View style={styles.loadingContainer}>
@@ -284,10 +280,10 @@ export default function SettingsScreen() {
           subtitle="Toggle between light and dark themes"
           rightElement={
             <Switch
-              value={preferences.theme === 'dark'}
+              value={isDark}
               onValueChange={handleThemeToggle}
               trackColor={{ false: theme.border, true: theme.primary }}
-              thumbColor={preferences.theme === 'dark' ? '#FFFFFF' : theme.textSecondary}
+              thumbColor={isDark ? '#FFFFFF' : theme.textSecondary}
             />
           }
         />

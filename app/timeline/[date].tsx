@@ -20,7 +20,7 @@ import { format, parseISO } from 'date-fns';
 const { width } = Dimensions.get('window');
 
 export default function TimelineScreen() {
-  const theme = useTheme();
+  const { theme } = useTheme();
   const { date } = useLocalSearchParams();
   const [entries, setEntries] = useState<TimelineEntry[]>([]);
   const [loading, setLoading] = useState(true);

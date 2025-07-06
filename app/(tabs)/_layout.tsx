@@ -3,7 +3,7 @@ import { BookOpen, Calendar, Search, Settings } from 'lucide-react-native';
 import { useTheme } from '@/hooks/useTheme';
 
 export default function TabLayout() {
-  const theme = useTheme();
+  const { theme } = useTheme();
 
   return (
     <Tabs

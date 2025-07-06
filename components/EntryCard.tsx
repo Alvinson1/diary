@@ -12,7 +12,7 @@ interface EntryCardProps {
 }
 
 export function EntryCard({ entry, onPress }: EntryCardProps) {
-  const theme = useTheme();
+  const { theme } = useTheme();
 
   const handlePress = () => {
     hapticFeedback.light();

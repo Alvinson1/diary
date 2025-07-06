@@ -10,7 +10,7 @@ import { MoodSelector } from '@/components/MoodSelector';
 import { format } from 'date-fns';
 
 export default function CreateEntryScreen() {
-  const theme = useTheme();
+  const { theme } = useTheme();
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [mood, setMood] = useState<MoodType>('neutral');
