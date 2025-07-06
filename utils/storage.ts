@@ -1,15 +1,10 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { DiaryEntry } from '@/types/diary';
+import { DiaryEntry, UserPreferences, SecuritySettings } from '@/types/diary';
 
 const ENTRIES_KEY = 'diary_entries';
 const USER_PREFERENCES_KEY = 'user_preferences';
-
-interface UserPreferences {
-  biometricEnabled?: boolean;
-  reminderEnabled?: boolean;
-  theme?: 'light' | 'dark';
-  notificationsEnabled?: boolean;
-}
+const SECURITY_SETTINGS_KEY = 'security_settings';
+const LAST_ACTIVITY_KEY = 'last_activity';
 
 export const storageService = {
   async getEntries(): Promise<DiaryEntry[]> {
@@ -75,6 +70,53 @@ export const storageService = {
       await AsyncStorage.setItem(USER_PREFERENCES_KEY, JSON.stringify(preferences));
     } catch (error) {
       console.error('Error saving preferences:', error);
+      throw error;
+    }
+  },
+
+  async getSecuritySettings(): Promise<SecuritySettings | null> {
+    try {
+      const settings = await AsyncStorage.getItem(SECURITY_SETTINGS_KEY);
+      return settings ? JSON.parse(settings) : null;
+    } catch (error) {
+      console.error('Error loading security settings:', error);
+      return null;
+    }
+  },
+
+  async saveSecuritySettings(settings: SecuritySettings): Promise<void> {
+    try {
+      await AsyncStorage.setItem(SECURITY_SETTINGS_KEY, JSON.stringify(settings));
+    } catch (error) {
+      console.error('Error saving security settings:', error);
+      throw error;
+    }
+  },
+
+  async updateLastActivity(): Promise<void> {
+    try {
+      await AsyncStorage.setItem(LAST_ACTIVITY_KEY, Date.now().toString());
+    } catch (error) {
+      console.error('Error updating last activity:', error);
+    }
+  },
+
+  async getLastActivity(): Promise<number | null> {
+    try {
+      const activity = await AsyncStorage.getItem(LAST_ACTIVITY_KEY);
+      return activity ? parseInt(activity, 10) : null;
+    } catch (error) {
+      console.error('Error getting last activity:', error);
+      return null;
+    }
+  },
+
+  async clearSecurityData(): Promise<void> {
+    try {
+      await AsyncStorage.removeItem(SECURITY_SETTINGS_KEY);
+      await AsyncStorage.removeItem(LAST_ACTIVITY_KEY);
+    } catch (error) {
+      console.error('Error clearing security data:', error);
       throw error;
     }
   }

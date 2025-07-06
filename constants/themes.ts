@@ -10,6 +10,10 @@ export const lightTheme: Theme = {
   text: '#1E293B',
   textSecondary: '#64748B',
   border: '#E2E8F0',
+  success: '#10B981',
+  warning: '#F59E0B',
+  error: '#EF4444',
+  shadow: 'rgba(0, 0, 0, 0.1)',
 };
 
 export const darkTheme: Theme = {
@@ -22,6 +26,10 @@ export const darkTheme: Theme = {
   text: '#F8FAFC',
   textSecondary: '#94A3B8',
   border: '#334155',
+  success: '#34D399',
+  warning: '#FBBF24',
+  error: '#F87171',
+  shadow: 'rgba(0, 0, 0, 0.3)',
 };
 
 export const moodColors = {

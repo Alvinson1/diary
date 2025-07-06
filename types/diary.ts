@@ -33,16 +33,33 @@ export interface Theme {
   text: string;
   textSecondary: string;
   border: string;
+  success: string;
+  warning: string;
+  error: string;
+  shadow: string;
+}
+
+export interface SecuritySettings {
+  isEnabled: boolean;
+  authType: 'pin' | 'password' | 'pattern' | 'biometric';
+  pin?: string;
+  password?: string;
+  pattern?: number[];
+  biometricEnabled: boolean;
+  autoLockTimeout: number; // in minutes
+}
+
+export interface UserPreferences {
+  biometricEnabled: boolean;
+  reminderEnabled: boolean;
+  theme: 'light' | 'dark' | 'auto';
+  notificationsEnabled: boolean;
+  security: SecuritySettings;
 }
 
 export interface User {
   id: string;
   name: string;
   email: string;
-  preferences: {
-    theme: 'light' | 'dark';
-    biometricEnabled: boolean;
-    reminderEnabled: boolean;
-    reminderTime: string;
-  };
+  preferences: UserPreferences;
 }

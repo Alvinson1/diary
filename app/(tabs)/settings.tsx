@@ -1,33 +1,34 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, Switch, Alert, Platform } from 'react-native';
+import { router } from 'expo-router';
 import { useTheme } from '@/hooks/useTheme';
+import { useAuth } from '@/hooks/useAuth';
 import { storageService } from '@/utils/storage';
-import { Shield, Moon, Bell, Download, Trash2, Info, Smartphone } from 'lucide-react-native';
+import { Shield, Moon, Bell, Download, Trash2, Info, Smartphone, Settings as SettingsIcon, Lock } from 'lucide-react-native';
 import Animated, { FadeInDown, useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
 
 interface UserPreferences {
   biometricEnabled: boolean;
   reminderEnabled: boolean;
-  theme: 'light' | 'dark';
+  theme: 'light' | 'dark' | 'auto';
   notificationsEnabled: boolean;
 }
 
 export default function SettingsScreen() {
   const { theme, isDark, updateTheme, isLoading: themeLoading } = useTheme();
+  const { securitySettings, disableSecurity, biometricAvailable, logout } = useAuth();
   const [preferences, setPreferences] = useState<UserPreferences>({
     biometricEnabled: false,
     reminderEnabled: false,
-    theme: 'light',
+    theme: 'auto',
     notificationsEnabled: false,
   });
   const [loading, setLoading] = useState(true);
-  const [biometricAvailable, setBiometricAvailable] = useState(false);
 
   const scaleValue = useSharedValue(1);
 
   useEffect(() => {
     loadSettings();
-    checkBiometricAvailability();
   }, []);
 
   const loadSettings = async () => {
@@ -37,7 +38,7 @@ export default function SettingsScreen() {
         setPreferences({
           biometricEnabled: storedPreferences.biometricEnabled || false,
           reminderEnabled: storedPreferences.reminderEnabled || false,
-          theme: storedPreferences.theme || 'light',
+          theme: storedPreferences.theme || 'auto',
           notificationsEnabled: storedPreferences.notificationsEnabled || false,
         });
       }
@@ -46,11 +47,6 @@ export default function SettingsScreen() {
     } finally {
       setLoading(false);
     }
-  };
-
-  const checkBiometricAvailability = () => {
-    // Biometric authentication is only available on native platforms
-    setBiometricAvailable(Platform.OS !== 'web');
   };
 
   const saveSettings = async (newPreferences: UserPreferences) => {
@@ -82,26 +78,14 @@ export default function SettingsScreen() {
     }
   };
 
-  const handleBiometricToggle = async (enabled: boolean) => {
-    if (!biometricAvailable) {
-      showError('Biometric authentication is not available on this platform.');
-      return;
-    }
-
-    if (enabled) {
-      // On web, we can't actually use biometric auth, so just simulate it
-      if (Platform.OS === 'web') {
-        showError('Biometric authentication requires a native mobile app. This feature will be available when you download the app.');
-        return;
-      }
-
-      // For native platforms, you would implement actual biometric auth here
-      const newPreferences = { ...preferences, biometricEnabled: true };
-      await saveSettings(newPreferences);
-    } else {
-      const newPreferences = { ...preferences, biometricEnabled: false };
-      await saveSettings(newPreferences);
-    }
+  const handleThemeToggle = async (isDarkMode: boolean) => {
+    const newTheme = isDarkMode ? 'dark' : 'light';
+    const newPreferences = { ...preferences, theme: newTheme };
+    
+    await Promise.all([
+      saveSettings(newPreferences),
+      updateTheme(newTheme)
+    ]);
   };
 
   const handleReminderToggle = async (enabled: boolean) => {
@@ -109,20 +93,39 @@ export default function SettingsScreen() {
     await saveSettings(newPreferences);
   };
 
-  const handleThemeToggle = async (isDarkMode: boolean) => {
-    const newTheme = isDarkMode ? 'dark' : 'light';
-    const newPreferences = { ...preferences, theme: newTheme };
-    
-    // Update both local state and global theme
-    await Promise.all([
-      saveSettings(newPreferences),
-      updateTheme(newTheme)
-    ]);
-  };
-
   const handleNotificationsToggle = async (enabled: boolean) => {
     const newPreferences = { ...preferences, notificationsEnabled: enabled };
     await saveSettings(newPreferences);
+  };
+
+  const handleSecuritySetup = () => {
+    router.push('/security');
+  };
+
+  const handleDisableSecurity = () => {
+    showAlert(
+      'Disable Security',
+      'This will remove all security settings and allow unrestricted access to your diary.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { 
+          text: 'Disable', 
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await disableSecurity();
+              if (Platform.OS === 'web') {
+                alert('Security has been disabled.');
+              } else {
+                Alert.alert('Security Disabled', 'Security has been disabled.');
+              }
+            } catch (error) {
+              showError('Failed to disable security. Please try again.');
+            }
+          }
+        }
+      ]
+    );
   };
 
   const handleExportData = () => {
@@ -243,36 +246,40 @@ export default function SettingsScreen() {
         entering={FadeInDown.delay(100).springify()}
         style={styles.section}
       >
-        <Text style={[styles.sectionTitle, { color: theme.textSecondary }]}>Privacy & Security</Text>
+        <Text style={[styles.sectionTitle, { color: theme.textSecondary }]}>Security & Privacy</Text>
         
         <SettingItem
           icon={Shield}
-          title="Biometric Authentication"
+          title="App Security"
           subtitle={
-            biometricAvailable 
-              ? "Secure your diary with Face ID or Touch ID" 
-              : Platform.OS === 'web' 
-                ? "Available in mobile app" 
-                : "Not available on this device"
+            securitySettings?.isEnabled 
+              ? `Protected with ${securitySettings.authType}${securitySettings.biometricEnabled ? ' + biometric' : ''}`
+              : "Set up PIN, password, or pattern lock"
           }
-          disabled={!biometricAvailable}
+          onPress={securitySettings?.isEnabled ? handleDisableSecurity : handleSecuritySetup}
           rightElement={
-            <Switch
-              value={preferences.biometricEnabled}
-              onValueChange={handleBiometricToggle}
-              trackColor={{ false: theme.border, true: theme.primary }}
-              thumbColor={preferences.biometricEnabled ? '#FFFFFF' : theme.textSecondary}
-              disabled={!biometricAvailable}
-            />
+            <Text style={[styles.arrow, { color: theme.primary }]}>
+              {securitySettings?.isEnabled ? 'Disable' : 'Setup'}
+            </Text>
           }
         />
+
+        {securitySettings?.isEnabled && (
+          <SettingItem
+            icon={Lock}
+            title="Change Security Method"
+            subtitle="Update your authentication method"
+            onPress={handleSecuritySetup}
+            rightElement={<Text style={[styles.arrow, { color: theme.textSecondary }]}>›</Text>}
+          />
+        )}
       </Animated.View>
 
       <Animated.View 
         entering={FadeInDown.delay(200).springify()}
         style={styles.section}
       >
-        <Text style={[styles.sectionTitle, { color: theme.textSecondary }]}>Preferences</Text>
+        <Text style={[styles.sectionTitle, { color: theme.textSecondary }]}>Appearance</Text>
         
         <SettingItem
           icon={Moon}
@@ -287,7 +294,14 @@ export default function SettingsScreen() {
             />
           }
         />
+      </Animated.View>
 
+      <Animated.View 
+        entering={FadeInDown.delay(300).springify()}
+        style={styles.section}
+      >
+        <Text style={[styles.sectionTitle, { color: theme.textSecondary }]}>Notifications</Text>
+        
         <SettingItem
           icon={Bell}
           title="Daily Reminders"
@@ -304,7 +318,7 @@ export default function SettingsScreen() {
 
         <SettingItem
           icon={Smartphone}
-          title="Notifications"
+          title="Push Notifications"
           subtitle="Enable app notifications"
           rightElement={
             <Switch
@@ -318,7 +332,7 @@ export default function SettingsScreen() {
       </Animated.View>
 
       <Animated.View 
-        entering={FadeInDown.delay(300).springify()}
+        entering={FadeInDown.delay(400).springify()}
         style={styles.section}
       >
         <Text style={[styles.sectionTitle, { color: theme.textSecondary }]}>Data Management</Text>
@@ -339,13 +353,13 @@ export default function SettingsScreen() {
             title="Clear All Data"
             subtitle="Permanently delete all entries"
             onPress={handleClearData}
-            rightElement={<Text style={[styles.arrow, { color: theme.accent }]}>›</Text>}
+            rightElement={<Text style={[styles.arrow, { color: theme.error }]}>›</Text>}
           />
         </Animated.View>
       </Animated.View>
 
       <Animated.View 
-        entering={FadeInDown.delay(400).springify()}
+        entering={FadeInDown.delay(500).springify()}
         style={styles.footer}
       >
         <View style={[styles.infoCard, { backgroundColor: theme.surface, borderColor: theme.border }]}>
